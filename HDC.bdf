@@ -1,0 +1,120 @@
+//-------------------------------------------------------------------
+// Benchmark Script Template
+//-------------------------------------------------------------------
+// Author : 
+// Date   : 
+// History: 
+//-------------------------------------------------------------------
+// Benchmark Description:
+// 
+//-------------------------------------------------------------------
+
+@codepage(1252)
+
+benchmark WebService
+ 
+use "WebAPI.bdh"
+ 
+// Definition of global variables: string, number, float, boolean, array
+var
+  sResponse    : string;
+  
+// Random Variables Section 
+dclrand
+  
+dclparam
+
+
+// Workload Section 
+dcluser  
+  user
+    VCode
+  transactions
+    TInit              : begin;  // Initialization
+    TConsumeWebService : 1;      // Transactions
+                              
+  user
+    VTeste
+  transactions
+    TInit              : begin;  // Initialization
+    TConsumeWebService : 1;      // Transactions
+    // 4 usuários com 360 transações = 1440
+    // requisito 1300 em 60 minutos
+    
+                              
+dclfunc
+  
+  function InitMeasureBounds
+    begin
+      
+      MeasureSetBound(NULL,MEASURE_TIMER_RESPONSETIME, 2, 0.0);
+      
+      MeasureSetBound("1. Consumir WebService",MEASURE_TIMER_RESPONSETIME, 2, 2.5);
+      MeasureCalculateRawPercentiles("1. Consumir WebService", MEASURE_TIMER_RESPONSETIME, false, OPT_PERCENTILES_GRANULARITY_10_PER_MIL);      
+            
+    end InitMeasureBounds;  
+  
+  function LogMessage(message: string)
+    var
+      formatMessage: string;
+    begin
+      formatMessage := message;
+      RepMessage(formatMessage, SEVERITY_SUCCESS);
+      WriteLog(formatMessage);
+      print(formatMessage);
+            
+    end LogMessage;  
+
+dclevent
+  // Tratativa de sucesso no erro 412
+  handler HandlerError <EVENT_RAISE_ERROR>
+  var
+    sMensagemImpedimento: string;
+    nNumeroErro         : number;
+  begin
+    nNumeroErro := GetLastError();
+    WriteErr("codigo de erro: " + nNumeroErro);
+    print("codigo de erro: " + nNumeroErro);
+    
+  end HandlerError;
+
+
+// Transactions Section
+dcltrans
+  transaction TInit
+begin
+
+  WebSetBrowser(WEB_BROWSER_CUSTOM);
+  WebSetHttpVersion("HTTP/1.1");
+  SetEncoding("UTF-8");
+
+  InitMeasureBounds();   
+
+end TInit;
+
+transaction TConsumeWebService
+
+  var
+  begin
+
+
+
+    //Parses the response data and store the response in to a variable
+    WebParseDataBound(sResponse);
+
+    
+    WebSetHttpHeader("Authorization: d0763edaa9d9bd2a9516280e9044d000");
+    
+    MeasureStart("1. Consumir WebService");
+//    WebUrl ("http://hsibepuapr01/sibews/rest/requerimento/consultar/inclusao/prorrogacao/nb/" + sNB + "/idUnidadeOrganica/" + sUO);
+    WebUrl ("http://dev.php/hdc/v1/pagamento");
+    MeasureStop("1. Consumir WebService");
+    
+    LogMessage(sResponse);
+
+end TConsumeWebService;
+
+dclform
+
+ 
+  
